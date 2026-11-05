@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#176b4d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="เงินออม">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>เงินออมของฉัน</title>
+<style>
+:root{color-scheme:light;--green:#176b4d;--bg:#f4f7f5;--card:#fff;--text:#17221d;--muted:#68756e;--line:#e2e9e4}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+main{max-width:720px;margin:auto;padding:18px 14px 40px}
+header{display:flex;align-items:center;gap:12px;margin:8px 0 18px}
+.logo{width:52px;height:52px;border-radius:16px;background:#dff2e8;display:grid;place-items:center;font-size:30px}
+h1{font-size:22px;margin:0}header p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:17px;margin:12px 0;box-shadow:0 3px 12px #183b2010}
+.label{font-size:13px;color:var(--muted)}.total{font-size:32px;font-weight:750;margin:4px 0 14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+progress{width:100%;height:12px;accent-color:var(--green);margin:10px 0}
+input,button{font:inherit}input{width:100%;padding:12px;border:1px solid #d5dfd8;border-radius:11px;background:#fff;color:var(--text);margin-top:5px}
+.field{margin:10px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{border:0;border-radius:11px;padding:12px 14px;cursor:pointer;font-weight:650}
+.primary{background:var(--green);color:white;width:100%;margin-top:6px}.secondary{background:#edf4ef;color:var(--green)}
+.smallbtn{padding:7px 10px;font-size:12px;background:#f3f5f3;color:#59645d}
+.entry{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.entry:last-child{border-bottom:0}.entry-title{font-weight:600;overflow-wrap:anywhere}.entry-date{font-size:12px;color:var(--muted);margin-top:3px}
+.amount{font-weight:700;color:var(--green);white-space:nowrap}.empty{text-align:center;color:var(--muted);padding:20px 0}
+.notice{font-size:12px;color:var(--muted);line-height:1.5}
+@media(max-width:420px){.grid{grid-template-columns:1fr}.total{font-size:29px}}
+</style>
+</head>
+<body>
+<main>
+<header><div class="logo">🐷</div><div><h1>เงินออมของฉัน</h1><p>บันทึกวันนี้ เพื่อเป้าหมายวันหน้า</p></div></header>
+<section class="card">
+<div class="label">เงินออมสะสม</div><div class="total" id="total">฿0.00</div>
+<div class="row"><span class="label">เป้าหมาย</span><strong id="goalLabel">฿100,000.00</strong></div>
+<progress id="progress" max="100" value="0"></progress>
+<div class="label" id="percent">0% ของเป้าหมาย</div>
+<div class="field"><label class="label" for="goal">ตั้งเป้าหมาย (บาท)</label><input id="goal" type="number" min="1" step="1" value="100000"></div>
+<button class="secondary" id="saveGoal">บันทึกเป้าหมาย</button>
+</section>
+<section class="card">
+<h2 style="font-size:17px;margin:0 0 8px">＋ บันทึกเงินออม</h2>
+<div class="grid">
+<div class="field"><label class="label" for="amount">จำนวนเงิน (บาท)</label><input id="amount" type="number" min="0.01" step="0.01" placeholder="เช่น 500"></div>
+<div class="field"><label class="label" for="date">วันที่</label><input id="date" type="date"></div>
+</div>
+<div class="field"><label class="label" for="note">หมายเหตุ (ไม่บังคับ)</label><input id="note" maxlength="120" placeholder="เช่น ออมจากรายได้วันนี้"></div>
+<button class="primary" id="add">บันทึกเงินออม</button>
+<div class="notice" id="message" role="status" style="margin-top:8px"></div>
+</section>
+<section class="card">
+<div class="row"><h2 style="font-size:17px;margin:0">ประวัติการออม</h2><button class="smallbtn" id="export">สำรองข้อมูล</button></div>
+<div id="history"><div class="empty">ยังไม่มีรายการออม</div></div>
+<div class="row" style="margin-top:10px;flex-wrap:wrap">
+<label class="secondary" style="display:inline-block;padding:10px 12px;border-radius:11px;font-size:13px;font-weight:650;cursor:pointer">นำเข้าข้อมูล<input id="import" type="file" accept="application/json" style="display:none"></label>
+<button class="smallbtn" id="clear">ล้างรายการทั้งหมด</button>
+</div>
+</section>
+<p class="notice">ข้อมูลเก็บไว้ในเบราว์เซอร์ของอุปกรณ์นี้ โปรดสำรองข้อมูลเป็นระยะ โดยเฉพาะก่อนล้างประวัติ Safari หรือเปลี่ยนอุปกรณ์</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const today=new Date();$('date').value=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+let entries=[];let goal=100000;
+try{entries=JSON.parse(localStorage.getItem('savingsEntries')||'[]');goal=Number(localStorage.getItem('savingsGoal'))||100000}catch(e){}
+const money=n=>'฿'+Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+function persist(){try{localStorage.setItem('savingsEntries',JSON.stringify(entries));localStorage.setItem('savingsGoal',String(goal));return true}catch(e){return false}}
+function render(){
+ const total=entries.reduce((s,e)=>s+Number(e.amount||0),0),pct=goal>0?total/goal*100:0;
+ $('total').textContent=money(total);$('goalLabel').textContent=money(goal);$('goal').value=goal;
+ $('progress').value=Math.min(100,pct);$('percent').textContent=pct.toFixed(1)+'% ของเป้าหมาย'+(total>=goal?' • ถึงเป้าหมายแล้ว!':'');
+ const h=$('history');h.innerHTML='';
+ if(!entries.length){h.innerHTML='<div class="empty">ยังไม่มีรายการออม</div>';return}
+ [...entries].reverse().forEach((e,r)=>{
+  const idx=entries.length-1-r,row=document.createElement('div');row.className='entry';
+  const left=document.createElement('div');left.style.minWidth='0';
+  const title=document.createElement('div');title.className='entry-title';title.textContent=e.note||'เงินออม';
+  const date=document.createElement('div');date.className='entry-date';date.textContent=e.date;
+  left.append(title,date);
+  const right=document.createElement('div');right.style.display='flex';right.style.alignItems='center';right.style.gap='8px';
+  const val=document.createElement('div');val.className='amount';val.textContent='+'+money(e.amount);
+  const del=document.createElement('button');del.className='smallbtn';del.textContent='ลบ';del.onclick=()=>{if(confirm('ลบรายการนี้หรือไม่?')){entries.splice(idx,1);persist();render()}};
+  right.append(val,del);row.append(left,right);h.append(row);
+ });
+}
+$('add').onclick=()=>{
+ const amount=Number($('amount').value),date=$('date').value;
+ if(!(amount>0)||!date){$('message').textContent='กรุณากรอกจำนวนเงินและวันที่ให้ถูกต้อง';return}
+ entries.push({amount,date,note:$('note').value.trim()});
+ const ok=persist();$('amount').value='';$('note').value='';$('message').textContent=ok?'บันทึกเรียบร้อยแล้ว':'บันทึกในหน้านี้ได้ แต่พื้นที่จัดเก็บอาจไม่รองรับ';render();
+};
+$('saveGoal').onclick=()=>{const g=Number($('goal').value);if(!(g>0)){alert('กรุณาใส่เป้าหมายมากกว่า 0');return}goal=g;persist();render();$('message').textContent='บันทึกเป้าหมายแล้ว'};
+$('clear').onclick=()=>{if(confirm('ลบรายการออมทั้งหมดหรือไม่?')){entries=[];persist();render();$('message').textContent='ล้างรายการแล้ว'}};
+$('export').onclick=()=>{const blob=new Blob([JSON.stringify({goal,entries},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='savings-backup.json';a.click();URL.revokeObjectURL(url)};
+$('import').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.entries))throw Error();entries=data.entries;goal=Number(data.goal)||100000;persist();render();$('message').textContent='นำเข้าข้อมูลแล้ว'}catch(err){alert('ไฟล์สำรองไม่ถูกต้อง')}e.target.value=''};
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+render();
+</script>
+</body></html>
